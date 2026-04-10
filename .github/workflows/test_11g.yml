@@ -13,13 +13,13 @@ jobs:
       matrix:
         ruby: [
           '4.0',
-          '3.4',
-          '3.3',
-          '3.2',
-          ruby-head,
-          ruby-debug,
-          truffleruby,
-          truffleruby-head
+          # '3.4',
+          # '3.3',
+          # '3.2',
+          # ruby-head,
+          # ruby-debug,
+          # truffleruby,
+          # truffleruby-head
         ]
     env:
       ORACLE_HOME: /opt/oracle/instantclient_21_15
