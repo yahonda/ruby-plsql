@@ -17,11 +17,7 @@ module PLSQL
     end
 
     def exec
-      if ENV["RUBY_PLSQL_DEBUG"]
-        $stderr.puts "DEBUG: sql = #{@sql}"
-        $stderr.puts "DEBUG: bind_values = #{@bind_values.inspect}"
-        $stderr.puts "DEBUG: bind_metadata = #{@bind_metadata.inspect}"
-      end
+      # puts "DEBUG: sql = #{@sql.gsub("\n","<br/>\n")}"
       @cursor = @schema.connection.parse(@sql)
 
       @bind_values.each do |arg, value|
@@ -119,7 +115,7 @@ module PLSQL
       MATCHING_TYPES = {
         integer: ["NUMBER", "NATURAL", "NATURALN", "POSITIVE", "POSITIVEN", "SIGNTYPE", "SIMPLE_INTEGER", "PLS_INTEGER", "BINARY_INTEGER"],
         decimal: ["NUMBER", "BINARY_FLOAT", "BINARY_DOUBLE"],
-        string: ["VARCHAR", "VARCHAR2", "NVARCHAR2", "CHAR", "NCHAR", "CLOB", "BLOB", "XMLTYPE"],
+        string: ["VARCHAR", "VARCHAR2", "NVARCHAR2", "CHAR", "NCHAR", "CLOB", "BLOB", "XMLTYPE", "OPAQUE/XMLTYPE"],
         date: ["DATE"],
         time: ["DATE", "TIMESTAMP", "TIMESTAMP WITH TIME ZONE", "TIMESTAMP WITH LOCAL TIME ZONE"],
         boolean: ["PL/SQL BOOLEAN"],
@@ -229,7 +225,6 @@ module PLSQL
       def add_argument(argument, value, argument_metadata = nil)
         argument_metadata ||= arguments[argument]
         raise ArgumentError, "Wrong argument #{argument.inspect} passed to PL/SQL procedure" unless argument_metadata
-        $stderr.puts "DEBUG add_argument: #{argument} data_type=#{argument_metadata[:data_type]} type_name=#{argument_metadata[:type_name]} sql_type_name=#{argument_metadata[:sql_type_name]}" if ENV["RUBY_PLSQL_DEBUG"]
         case argument_metadata[:data_type]
         when "PL/SQL RECORD"
           add_record_declaration(argument, argument_metadata)
@@ -245,8 +240,8 @@ module PLSQL
           @bind_values[argument] = value.nil? ? nil : (value ? 1 : 0)
           @bind_metadata[argument] = argument_metadata.merge(data_type: "NUMBER", data_precision: 1)
           "l_#{argument}"
-        when "UNDEFINED", "XMLTYPE"
-          if argument_metadata[:type_name] == "XMLTYPE" || argument_metadata[:data_type] == "XMLTYPE"
+        when "UNDEFINED", "XMLTYPE", "OPAQUE/XMLTYPE"
+          if argument_metadata[:type_name] == "XMLTYPE" || argument_metadata[:data_type] =~ /XMLTYPE/
             @declare_sql << "l_#{argument} XMLTYPE;\n"
             @assignment_sql << "l_#{argument} := XMLTYPE(:#{argument});\n" if not value.nil?
             @bind_values[argument] = value if not value.nil?
@@ -400,8 +395,8 @@ module PLSQL
             end
           end
           "l_#{argument} := " if is_return_value
-        when "UNDEFINED", "XMLTYPE"
-          if argument_metadata[:type_name] == "XMLTYPE" || argument_metadata[:data_type] == "XMLTYPE"
+        when "UNDEFINED", "XMLTYPE", "OPAQUE/XMLTYPE"
+          if argument_metadata[:type_name] == "XMLTYPE" || argument_metadata[:data_type] =~ /XMLTYPE/
             @declare_sql << "l_#{argument} XMLTYPE;\n" if is_return_value
             bind_variable = :"o_#{argument}"
             @return_vars << bind_variable
