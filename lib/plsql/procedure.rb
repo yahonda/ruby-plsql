@@ -126,6 +126,9 @@ module PLSQL
             data_type, in_out, data_length, data_precision, data_scale, char_used,
             char_length, type_owner, type_name, type_subname, defaulted = r
 
+        # Oracle 23c reports BOOLEAN as "BOOLEAN" instead of "PL/SQL BOOLEAN"
+        data_type = "PL/SQL BOOLEAN" if data_type == "BOOLEAN"
+
         @overloaded ||= !overload.nil?
         # if not overloaded then store arguments at key 0
         overload ||= 0
@@ -234,6 +237,9 @@ module PLSQL
         subprogram_id, _object_name, overload, argument_name, position,
           data_type, in_out, data_length, data_precision, data_scale, char_used,
           char_length, type_owner, type_name, type_package, type_object_type, defaulted = r
+
+        # Oracle 23c reports BOOLEAN as "BOOLEAN" instead of "PL/SQL BOOLEAN"
+        data_type = "PL/SQL BOOLEAN" if data_type == "BOOLEAN"
 
         @overloaded ||= !overload.nil?
         # if not overloaded then store arguments at key 0
