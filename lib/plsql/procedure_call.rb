@@ -240,8 +240,8 @@ module PLSQL
           @bind_values[argument] = value.nil? ? nil : (value ? 1 : 0)
           @bind_metadata[argument] = argument_metadata.merge(data_type: "NUMBER", data_precision: 1)
           "l_#{argument}"
-        when "UNDEFINED"
-          if argument_metadata[:type_name] == "XMLTYPE"
+        when "UNDEFINED", "XMLTYPE"
+          if argument_metadata[:type_name] == "XMLTYPE" || argument_metadata[:data_type] == "XMLTYPE"
             @declare_sql << "l_#{argument} XMLTYPE;\n"
             @assignment_sql << "l_#{argument} := XMLTYPE(:#{argument});\n" if not value.nil?
             @bind_values[argument] = value if not value.nil?
@@ -395,8 +395,8 @@ module PLSQL
             end
           end
           "l_#{argument} := " if is_return_value
-        when "UNDEFINED"
-          if argument_metadata[:type_name] == "XMLTYPE"
+        when "UNDEFINED", "XMLTYPE"
+          if argument_metadata[:type_name] == "XMLTYPE" || argument_metadata[:data_type] == "XMLTYPE"
             @declare_sql << "l_#{argument} XMLTYPE;\n" if is_return_value
             bind_variable = :"o_#{argument}"
             @return_vars << bind_variable

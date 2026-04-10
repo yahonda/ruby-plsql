@@ -258,8 +258,8 @@ describe "Parameter type mapping /" do
     end
 
     after(:all) do
-      plsql.execute "DROP FUNCTION test_xmltype"
-      plsql.execute "DROP PROCEDURE test_xmltype2"
+      plsql.execute "DROP FUNCTION test_xmltype" rescue nil
+      plsql.execute "DROP PROCEDURE test_xmltype2" rescue nil
       plsql.logoff
     end
 
