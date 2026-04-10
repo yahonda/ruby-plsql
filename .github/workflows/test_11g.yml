@@ -85,7 +85,7 @@ jobs:
         docker cp "$ORACLE_CONTAINER":/u01/app/oracle/product/11.2.0/xe/oracore/zoneinfo/timezone_14.dat /tmp/timezone_14.dat
         sudo mv /tmp/timezlrg_14.dat /opt/oracle/instantclient_21_15/oracore/zoneinfo/
         sudo mv /tmp/timezone_14.dat /opt/oracle/instantclient_21_15/oracore/zoneinfo/
-        echo "ORA_TZFILE=/opt/oracle/instantclient_21_15/oracore/zoneinfo/timezlrg_14.dat" >> $GITHUB_ENV
+        echo "ORA_TZFILE=timezlrg_14.dat" >> $GITHUB_ENV
     - name: Create database user
       run: |
         ./ci/setup_accounts.sh
