@@ -517,8 +517,8 @@ module PLSQL
         when "PL/SQL BOOLEAN"
           numeric_value = @cursor[":o_#{argument}"]
           numeric_value.nil? ? nil : numeric_value == 1
-        when "UNDEFINED"
-          if argument_metadata[:type_name] == "XMLTYPE"
+        when "UNDEFINED", "XMLTYPE", "OPAQUE/XMLTYPE"
+          if argument_metadata[:type_name] == "XMLTYPE" || argument_metadata[:data_type] =~ /XMLTYPE/
             @cursor[":o_#{argument}"]
           end
         else
