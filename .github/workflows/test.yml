@@ -22,8 +22,8 @@ jobs:
           # truffleruby-head
         ]
     env:
-      ORACLE_HOME: /usr/lib/oracle/23/client64
-      LD_LIBRARY_PATH: /usr/lib/oracle/23/client64/lib
+      ORACLE_HOME: /opt/oracle/instantclient_23_26
+      LD_LIBRARY_PATH: /opt/oracle/instantclient_23_26
       NLS_LANG: AMERICAN_AMERICA.AL32UTF8
       TNS_ADMIN: ./ci/network/admin
       DATABASE_NAME: FREEPDB1
@@ -51,21 +51,20 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
-    - name: Install required package
+    - name: Create symbolic link for libaio library compatibility
       run: |
-        sudo apt-get install alien
         sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
-    - name: Download Oracle client
+    - name: Download Oracle instant client
       run: |
-        wget -q https://yum.oracle.com/repo/OracleLinux/OL8/oracle/instantclient23/x86_64/getPackage/oracle-instantclient-basic-23.26.1.0.0-1.el8.x86_64.rpm
-        wget -q https://yum.oracle.com/repo/OracleLinux/OL8/oracle/instantclient23/x86_64/getPackage/oracle-instantclient-sqlplus-23.26.1.0.0-1.el8.x86_64.rpm
-        wget -q https://yum.oracle.com/repo/OracleLinux/OL8/oracle/instantclient23/x86_64/getPackage/oracle-instantclient-devel-23.26.1.0.0-1.el8.x86_64.rpm
-    - name: Install Oracle client
+        wget -q https://download.oracle.com/otn_software/linux/instantclient/2326100/instantclient-basic-linux.x64-23.26.1.0.0.zip
+        wget -q https://download.oracle.com/otn_software/linux/instantclient/2326100/instantclient-sdk-linux.x64-23.26.1.0.0.zip
+        wget -q https://download.oracle.com/otn_software/linux/instantclient/2326100/instantclient-sqlplus-linux.x64-23.26.1.0.0.zip
+    - name: Install Oracle instant client
       run: |
-        sudo alien -i oracle-instantclient-basic-23.26.1.0.0-1.el8.x86_64.rpm
-        sudo alien -i oracle-instantclient-sqlplus-23.26.1.0.0-1.el8.x86_64.rpm
-        sudo alien -i oracle-instantclient-devel-23.26.1.0.0-1.el8.x86_64.rpm
-        echo "/usr/lib/oracle/23/client64/bin" >> $GITHUB_PATH
+        sudo unzip instantclient-basic-linux.x64-23.26.1.0.0.zip -d /opt/oracle/
+        sudo unzip -o instantclient-sdk-linux.x64-23.26.1.0.0.zip -d /opt/oracle/
+        sudo unzip -o instantclient-sqlplus-linux.x64-23.26.1.0.0.zip -d /opt/oracle/
+        echo "/opt/oracle/instantclient_23_26" >> $GITHUB_PATH
     - name: Install JDBC Driver
       run: |
         wget -q https://download.oracle.com/otn-pub/otn_software/jdbc/233/ojdbc11.jar -O ./lib/ojdbc11.jar
