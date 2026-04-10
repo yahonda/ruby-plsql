@@ -441,6 +441,8 @@ describe "Connection" do
       @conn.exec "CREATE GLOBAL TEMPORARY TABLE #{tmp_table} (dummy CHAR(1))"
       expect { @conn.select_first("SELECT * FROM #{tmp_table}") }.not_to raise_error
       @conn.drop_all_ruby_temporary_tables
+      # ORA-00942 message in Oracle 23c includes schema and table name:
+      # 'table or view "SCHEMA"."TABLE" does not exist'
       expect { @conn.select_first("SELECT * FROM #{tmp_table}") }.to raise_error(/table or view.*does not exist/)
     end
 
@@ -449,6 +451,7 @@ describe "Connection" do
       @conn.exec "CREATE GLOBAL TEMPORARY TABLE #{tmp_table} (dummy CHAR(1))"
       expect { @conn.select_first("SELECT * FROM #{tmp_table}") }.not_to raise_error
       @conn.drop_session_ruby_temporary_tables
+      # ORA-00942 message in Oracle 23c includes schema and table name
       expect { @conn.select_first("SELECT * FROM #{tmp_table}") }.to raise_error(/table or view.*does not exist/)
     end
 
@@ -483,6 +486,7 @@ describe "Connection" do
       expect { @conn.select_first("SELECT * FROM #{tmp_table}") }.not_to raise_error
       @conn.logoff
       reconnect_connection
+      # ORA-00942 message in Oracle 23c includes schema and table name
       expect { @conn.select_first("SELECT * FROM #{tmp_table}") }.to raise_error(/table or view.*does not exist/)
     end
 
