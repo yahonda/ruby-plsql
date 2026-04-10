@@ -17,7 +17,11 @@ module PLSQL
     end
 
     def exec
-      # puts "DEBUG: sql = #{@sql.gsub("\n","<br/>\n")}"
+      if ENV["RUBY_PLSQL_DEBUG"]
+        $stderr.puts "DEBUG: sql = #{@sql}"
+        $stderr.puts "DEBUG: bind_values = #{@bind_values.inspect}"
+        $stderr.puts "DEBUG: bind_metadata = #{@bind_metadata.inspect}"
+      end
       @cursor = @schema.connection.parse(@sql)
 
       @bind_values.each do |arg, value|
@@ -225,6 +229,7 @@ module PLSQL
       def add_argument(argument, value, argument_metadata = nil)
         argument_metadata ||= arguments[argument]
         raise ArgumentError, "Wrong argument #{argument.inspect} passed to PL/SQL procedure" unless argument_metadata
+        $stderr.puts "DEBUG add_argument: #{argument} data_type=#{argument_metadata[:data_type]} type_name=#{argument_metadata[:type_name]} sql_type_name=#{argument_metadata[:sql_type_name]}" if ENV["RUBY_PLSQL_DEBUG"]
         case argument_metadata[:data_type]
         when "PL/SQL RECORD"
           add_record_declaration(argument, argument_metadata)
