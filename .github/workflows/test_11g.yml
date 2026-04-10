@@ -73,51 +73,19 @@ jobs:
     - name: Install JDBC Driver
       run: |
         wget -q https://download.oracle.com/otn-pub/otn_software/jdbc/233/ojdbc11.jar -O ./lib/ojdbc11.jar
-    - name: Upgrade Oracle 11g timezone file to match Instant Client
+    - name: Configure ORA_TZFILE to match Oracle 11g server
       run: |
-        # Oracle 11g XE ships with DSTv14; Instant Client 21.15 uses v35.
-        # Copy newer timezone files into the 11g container and run DBMS_DST
-        # to upgrade the server so it matches the client.
+        # Oracle 11g XE uses timezone file v14; Instant Client 21.15 embeds v35.
+        # This mismatch causes ORA-01805 when ruby-oci8 fetches DATE/TIMESTAMP
+        # values. Copy the v14 files from the 11g container and point the
+        # Instant Client at them via ORA_TZFILE.
         ORACLE_CONTAINER=$(docker ps --filter "ancestor=gvenzl/oracle-xe:11" -q)
-        CLIENT_ZONEINFO=/opt/oracle/instantclient_21_15/oracore/zoneinfo
-        ls -la "$CLIENT_ZONEINFO" || ls -la /opt/oracle/instantclient_21_15/
-        # Copy newer timezone files from the Instant Client into the 11g container
-        for f in "$CLIENT_ZONEINFO"/timezlrg_*.dat "$CLIENT_ZONEINFO"/timezone_*.dat; do
-          [ -f "$f" ] || continue
-          docker cp "$f" "$ORACLE_CONTAINER":/u01/app/oracle/product/11.2.0/xe/oracore/zoneinfo/
-        done
-        docker exec "$ORACLE_CONTAINER" ls -la /u01/app/oracle/product/11.2.0/xe/oracore/zoneinfo/
-        # Run DBMS_DST to upgrade the database timezone version
-        sqlplus -S sys/${DATABASE_SYS_PASSWORD}@${DATABASE_NAME} as sysdba <<'SQL'
-        SET SERVEROUTPUT ON
-        SELECT version FROM v$timezone_file;
-        DECLARE
-          l_tz_version PLS_INTEGER;
-        BEGIN
-          l_tz_version := DBMS_DST.get_latest_timezone_version;
-          DBMS_OUTPUT.PUT_LINE('Latest timezone version available: ' || l_tz_version);
-          DBMS_DST.begin_prepare(l_tz_version);
-          DBMS_DST.end_prepare;
-          DBMS_DST.begin_upgrade(l_tz_version);
-        END;
-        /
-        SQL
-        # Restart the database to complete begin_upgrade
-        docker exec "$ORACLE_CONTAINER" bash -c 'echo "shutdown immediate;
-        startup;
-        exit" | sqlplus -S / as sysdba'
-        sqlplus -S sys/${DATABASE_SYS_PASSWORD}@${DATABASE_NAME} as sysdba <<'SQL'
-        SET SERVEROUTPUT ON
-        DECLARE
-          l_failures PLS_INTEGER;
-        BEGIN
-          DBMS_DST.upgrade_database(l_failures);
-          DBMS_DST.end_upgrade(l_failures);
-          DBMS_OUTPUT.PUT_LINE('Upgrade failures: ' || l_failures);
-        END;
-        /
-        SELECT version FROM v$timezone_file;
-        SQL
+        sudo mkdir -p /opt/oracle/instantclient_21_15/oracore/zoneinfo
+        docker cp "$ORACLE_CONTAINER":/u01/app/oracle/product/11.2.0/xe/oracore/zoneinfo/timezlrg_14.dat /tmp/timezlrg_14.dat
+        docker cp "$ORACLE_CONTAINER":/u01/app/oracle/product/11.2.0/xe/oracore/zoneinfo/timezone_14.dat /tmp/timezone_14.dat
+        sudo mv /tmp/timezlrg_14.dat /opt/oracle/instantclient_21_15/oracore/zoneinfo/
+        sudo mv /tmp/timezone_14.dat /opt/oracle/instantclient_21_15/oracore/zoneinfo/
+        echo "ORA_TZFILE=/opt/oracle/instantclient_21_15/oracore/zoneinfo/timezlrg_14.dat" >> $GITHUB_ENV
     - name: Create database user
       run: |
         ./ci/setup_accounts.sh
