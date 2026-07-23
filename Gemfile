@@ -3,6 +3,10 @@ source "https://rubygems.org"
 group :development do
   gem "rspec_junit_formatter"
   gem "rdoc"
+
+  platforms :jruby do
+    gem "rbs", ">= 4.1.0.pre.2" # Use the java-platform gem so JRuby does not build the C extension
+  end
 end
 
 group :rubocop do
